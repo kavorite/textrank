@@ -34,7 +34,7 @@ func tokenize(x string) []string {
 	rtn := make([]string, 1024)
 	for _, t := range doc.Tokens() {
 		p := t.Tag[0]
-		if p != 'V' && p != 'N' {
+		if p != 'V' && p != 'N' && t.Tag != "PRP" {
 			continue
 		}
 		w := normalize(t.Text)
