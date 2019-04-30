@@ -11,9 +11,10 @@ func TestInspec(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	K := TextRank(string(src), 2, DefaultStops)
+	S := DefaultStops
+	K := TextRank(string(src), 2, S)
 	for w := range K.RankMap() {
-		if DefaultStops.Contains(w) || strings.TrimSpace(w) == "" {
+		if S.Contains(w) || strings.TrimSpace(w) == "" {
 			t.Fatalf("Stop-word found in TextRank payload: %s", w)
 		}
 	}
