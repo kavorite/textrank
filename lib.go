@@ -33,6 +33,10 @@ func tokenize(x string) []string {
 	doc, _ := prose.NewDocument(x)
 	rtn := make([]string, 1024)
 	for _, t := range doc.Tokens() {
+		p := t.Tag[0]
+		if p != 'V' && p != 'N' {
+			continue
+		}
 		w := normalize(t.Text)
 		if w == "" {
 			continue
