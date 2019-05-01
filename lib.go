@@ -1,3 +1,4 @@
+// TODO: n-gram keyphrase extraction?
 package textrank
 
 import (
@@ -15,6 +16,10 @@ import (
 	"github.com/alixaxel/pagerank"
 	"gopkg.in/jdkato/prose.v2"
 )
+
+func hash(x string) uint32 {
+	return adler32.Checksum([]byte(x))
+}
 
 type Stopwords map[string]struct{}
 
@@ -56,16 +61,12 @@ func tokenize(x string, S Stopwords) []string {
 			continue
 		}
 		w := normalize(t.Text)
-		if S.Contains(w) || strings.TrimSpace(w) == "" {
+		if S.Contains(w) || w == "" {
 			continue
 		}
 		rtn = append(rtn, w)
 	}
 	return rtn
-}
-
-func hash(x string) uint32 {
-	return adler32.Checksum([]byte(x))
 }
 
 func TextRank(x string, w uint, S Stopwords) (K kwdx.Keywords) {
