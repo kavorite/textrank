@@ -15,6 +15,7 @@ import (
 	"github.com/kavorite/kwdx"
 	"github.com/alixaxel/pagerank"
 	"gopkg.in/jdkato/prose.v2"
+	"github.com/kljensen/snowball"
 )
 
 func hash(x string) uint32 {
@@ -52,7 +53,11 @@ func normalize(x string) string {
 	return strings.TrimSpace(rtn)
 }
 
-func tokenize(x string, S Stopwords) []string {
+// Tokens represent a series of unigrams ascribed to a document.
+type Tokens []string
+
+// Tokenize splits the given document into its constituent unigrams.
+func Tokenize(x string, S Stopwords) Tokens {
 	doc, _ := prose.NewDocument(x)
 	rtn := make([]string, 0, len(x) / 3)
 	for _, t := range doc.Tokens() {
@@ -69,9 +74,24 @@ func tokenize(x string, S Stopwords) []string {
 	return rtn
 }
 
-func TextRank(x string, w uint, S Stopwords) (K kwdx.Keywords) {
+// Stem performs stemming on the tokens in-place in the given language. Errors
+// out if the language given is unsupported.
+func (T Tokens) Stem(lang string) error {
+	for i := 0; i < len(T); i++ {
+		stemmed, err := snowball.Stem(T[i], lang, true)
+		if err != nil {
+			return err
+		}
+		T[i] = stemmed
+	}
+	return nil
+}
+
+// TextRank tokenizes and performs keyword extraction on the given tokens with
+// window size = `w` (i.e., a context of 2w+1 words is examined on each
+// iteration).
+func TextRank(T Tokens, w uint, S Stopwords) (K kwdx.Keywords) {
 	G := pagerank.NewGraph()
-	T := tokenize(x, S)
 	D := make(map[uint32]string, len(T))
 	c := float64(w/2)
 	for i := w; i < uint(len(T))-w; i++ {
