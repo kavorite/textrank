@@ -87,6 +87,20 @@ func (T Tokens) Stem(lang string) error {
 	return nil
 }
 
+// StemTable returns a vocabulary dictionary mapping tokens to their stems.
+// Errors out if the language given is unsupported.
+func (T Tokens) StemTable(lang string) (map[string]string, error) {
+	D := make(map[string]string, len(T))
+	for _, t := range T {
+		s, err := snowball.Stem(t, lang, true)
+		if err != nil {
+			return nil, err
+		}
+		D[t] = s
+	}
+	return D, nil
+}
+
 // TextRank tokenizes and performs keyword extraction on the given tokens with
 // window size = `w` (i.e., a context of 2w+1 words is examined on each
 // iteration).
