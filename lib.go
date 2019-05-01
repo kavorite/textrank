@@ -90,7 +90,7 @@ func (T Tokens) Stem(lang string) error {
 // TextRank tokenizes and performs keyword extraction on the given tokens with
 // window size = `w` (i.e., a context of 2w+1 words is examined on each
 // iteration).
-func TextRank(T Tokens, w uint, S Stopwords) (K kwdx.Keywords) {
+func TextRank(T Tokens, w uint) (K kwdx.Keywords) {
 	G := pagerank.NewGraph()
 	D := make(map[uint32]string, len(T))
 	c := float64(w/2)
