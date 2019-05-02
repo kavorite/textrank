@@ -102,7 +102,7 @@ func (T Tokens) StemTable(lang string) (map[string]string, error) {
 }
 
 // TextRank tokenizes and performs keyword extraction on the given tokens with
-// window size = `w` (i.e., a context of 2w+1 words is examined on each
+// window size = `w` (i.e., a context of 2w+1 words is examined each
 // iteration).
 func TextRank(T Tokens, w uint) (K kwdx.Keywords) {
 	G := pagerank.NewGraph()
@@ -123,6 +123,6 @@ func TextRank(T Tokens, w uint) (K kwdx.Keywords) {
 		K.Tokens = append(K.Tokens, D[t])
 		K.Rankings = append(K.Rankings, r)
 	})
-	sort.Sort(K)
+	sort.Sort(sort.Reverse(K))
 	return
 }
