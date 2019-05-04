@@ -5,14 +5,12 @@ import (
 	"math"
 	"unicode"
 	"hash/adler32"
-	"sort"
 	"strings"
 
 	"golang.org/x/text/transform"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/unicode/norm"
 
-	"github.com/kavorite/kwdx"
 	"github.com/alixaxel/pagerank"
 	"gopkg.in/jdkato/prose.v2"
 	"github.com/kljensen/snowball"
@@ -87,16 +85,56 @@ func (T Tokens) Stem(lang string) error {
 	return nil
 }
 
+type BOW map[string]struct{}
+type StemTable map[string]string
+type TStemTable map[string]BOW
+
+func (D TStemTable) Insert(t, stem string) {
+	if _, ok := D[stem]; !ok {
+		D[stem] = make(BOW, 1)
+	}
+	D[stem][t] = struct{}{}
+}
+
+func (D TStemTable) HasStem(t, stem string) bool {
+	if S, ok := D[stem]; ok {
+		if _, ok = S[t]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 // StemTable returns a vocabulary dictionary mapping tokens to their stems.
 // Errors out if the language given is unsupported.
 func (T Tokens) StemTable(lang string) (map[string]string, error) {
 	D := make(map[string]string, len(T))
-	for _, t := range T {
-		s, err := snowball.Stem(t, lang, true)
+	if len(T) > 0 {
+		_, err := snowball.Stem(T[0], lang, true)
 		if err != nil {
 			return nil, err
 		}
+	}
+	for _, t := range T {
+		s, _ := snowball.Stem(t, lang, true)
 		D[t] = s
+	}
+	return D, nil
+}
+
+// TStemTable returns a vocabulary dictionary that maps each occurring stem in the corpus
+// to a corresponding set of terms (its "transposition"). 
+func (T Tokens) TStemTable(lang string) (TStemTable, error) {
+	D := make(TStemTable, len(T))
+	if len(T) > 0 {
+		_, err := snowball.Stem(T[0], lang, true)
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, t := range T {
+		s, _ := snowball.Stem(t, lang, true)
+		D.Insert(s, t)
 	}
 	return D, nil
 }
@@ -104,7 +142,7 @@ func (T Tokens) StemTable(lang string) (map[string]string, error) {
 // TextRank tokenizes and performs keyword extraction on the given tokens with
 // window size = `w` (i.e., a context of 2w+1 words is examined each
 // iteration).
-func TextRank(T Tokens, w uint) (K kwdx.Keywords) {
+func TextRank(T Tokens, w uint) (R map[string]float64) {
 	G := pagerank.NewGraph()
 	D := make(map[uint32]string, len(T))
 	c := float64(w/2)
@@ -117,12 +155,9 @@ func TextRank(T Tokens, w uint) (K kwdx.Keywords) {
 			G.Link(t, k, math.Abs(c-float64(j)))
 		}
 	}
-	K.Tokens = make([]string, 0, len(D))
-	K.Rankings = make([]float64, 0, len(D))
+	R = make(map[string]float64, len(D))
 	G.Rank(0.85, 1e-6, func(t uint32, r float64) {
-		K.Tokens = append(K.Tokens, D[t])
-		K.Rankings = append(K.Rankings, r)
+		R[D[t]] = r
 	})
-	sort.Sort(sort.Reverse(K))
 	return
 }
