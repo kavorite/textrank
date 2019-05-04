@@ -13,7 +13,7 @@ import (
 
 	"github.com/alixaxel/pagerank"
 	"gopkg.in/jdkato/prose.v2"
-	"github.com/kljensen/snowball"
+	"github.com/aaaton/golem"
 )
 
 func hash(x string) uint32 {
@@ -72,9 +72,9 @@ func Tokenize(x string, S Stopwords) Tokens {
 	return rtn
 }
 
-// Stem performs stemming on the tokens in-place in the given language. Errors
-// out if the language given is unsupported.
-func (T Tokens) Stem(lang string) error {
+// Lemmatize performs lemmatization on the tokens in-place in the given language.
+// Errors out if the language given is unsupported.
+func (T Tokens) Lemmatize(lang string) error {
 	for i := 0; i < len(T); i++ {
 		stemmed, err := snowball.Stem(T[i], lang, true)
 		if err != nil {
@@ -105,36 +105,30 @@ func (D TStemTable) HasStem(t, stem string) bool {
 	return false
 }
 
-// StemTable returns a vocabulary dictionary mapping tokens to their stems.
+// StemTable returns a vocabulary dictionary mapping tokens to their lemmas.
 // Errors out if the language given is unsupported.
-func (T Tokens) StemTable(lang string) (map[string]string, error) {
+func (T Tokens) LemmaTable(lang string) (map[string]string, error) {
 	D := make(map[string]string, len(T))
-	if len(T) > 0 {
-		_, err := snowball.Stem(T[0], lang, true)
-		if err != nil {
-			return nil, err
-		}
+	L, err := golem.New(lang)
+	if err != nil {
+		return nil, err
 	}
 	for _, t := range T {
-		s, _ := snowball.Stem(t, lang, true)
-		D[t] = s
+		D[t] = L.Lemma(t)
 	}
 	return D, nil
 }
 
 // TStemTable returns a vocabulary dictionary that maps each occurring stem in the corpus
 // to a corresponding set of terms (its "transposition"). 
-func (T Tokens) TStemTable(lang string) (TStemTable, error) {
+func (T Tokens) TLemmaTable(lang string) (TStemTable, error) {
 	D := make(TStemTable, len(T))
-	if len(T) > 0 {
-		_, err := snowball.Stem(T[0], lang, true)
-		if err != nil {
-			return nil, err
-		}
+	L, err := golem.New(lang)
+	if err != nil {
+		return nil, err
 	}
 	for _, t := range T {
-		s, _ := snowball.Stem(t, lang, true)
-		D.Insert(s, t)
+		D.Insert(L.Lemma(t), t)
 	}
 	return D, nil
 }
