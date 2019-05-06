@@ -1,4 +1,3 @@
-// TODO: n-gram keyphrase extraction?
 package textrank
 
 import (
@@ -14,6 +13,7 @@ import (
 	"github.com/alixaxel/pagerank"
 	"gopkg.in/jdkato/prose.v2"
 	"github.com/aaaton/golem"
+	"mvdan.cc/xurls"
 )
 
 func hash(x string) uint32 {
@@ -58,7 +58,15 @@ type Tokens []string
 func Tokenize(x string, S Stopwords) Tokens {
 	doc, _ := prose.NewDocument(x)
 	rtn := make([]string, 0, len(x) / 3)
+	xuris := xurls.Strict().FindAllString(x, -1)
+	U := make(map[string]struct{}, len(xuris))
+	for _, u := range xuris {
+		U[u] = struct{}{}
+	}
 	for _, t := range doc.Tokens() {
+		if _, ok := U[t]; ok {
+			continue
+		}
 		p := t.Tag[0]
 		if p != 'V' && p != 'F' && p != 'N' && t.Tag != "PRP" {
 			continue
