@@ -64,7 +64,7 @@ func Tokenize(x string, S Stopwords) Tokens {
 		U[u] = struct{}{}
 	}
 	for _, t := range doc.Tokens() {
-		if _, ok := U[t]; ok {
+		if _, ok := U[t.Text]; ok {
 			continue
 		}
 		p := t.Tag[0]
@@ -83,12 +83,12 @@ func Tokenize(x string, S Stopwords) Tokens {
 // Lemmatize performs lemmatization on the tokens in-place in the given language.
 // Errors out if the language given is unsupported.
 func (T Tokens) Lemmatize(lang string) error {
+	L, err := golem.New(lang)
+	if err != nil {
+		return err
+	}
 	for i := 0; i < len(T); i++ {
-		stemmed, err := snowball.Stem(T[i], lang, true)
-		if err != nil {
-			return err
-		}
-		T[i] = stemmed
+		T[i] = L.Lemma(T[i])
 	}
 	return nil
 }
