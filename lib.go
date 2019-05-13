@@ -80,17 +80,12 @@ func Tokenize(x string, S Stopwords) Tokens {
 	return rtn
 }
 
-// Lemmatize performs lemmatization on the tokens in-place in the given language.
-// Errors out if the language given is unsupported.
-func (T Tokens) Lemmatize(lang string) error {
-	L, err := golem.New(lang)
-	if err != nil {
-		return err
-	}
+// Lemmatize performs lemmatization on the tokens in-place in the given
+// language.
+func (T Tokens) Lemmatize(L *golem.Lemmatizer) {
 	for i := 0; i < len(T); i++ {
 		T[i] = L.Lemma(T[i])
 	}
-	return nil
 }
 
 type BOW map[string]struct{}
@@ -115,12 +110,8 @@ func (D TStemTable) HasStem(t, stem string) bool {
 
 // StemTable returns a vocabulary dictionary mapping tokens to their lemmas.
 // Errors out if the language given is unsupported.
-func (T Tokens) LemmaTable(lang string) (map[string]string, error) {
+func (T Tokens) LemmaTable(L *golem.Lemmatizer) (map[string]string, error) {
 	D := make(map[string]string, len(T))
-	L, err := golem.New(lang)
-	if err != nil {
-		return nil, err
-	}
 	for _, t := range T {
 		D[t] = L.Lemma(t)
 	}
@@ -129,12 +120,8 @@ func (T Tokens) LemmaTable(lang string) (map[string]string, error) {
 
 // TStemTable returns a vocabulary dictionary that maps each occurring stem in the corpus
 // to a corresponding set of terms (its "transposition"). 
-func (T Tokens) TLemmaTable(lang string) (TStemTable, error) {
+func (T Tokens) TLemmaTable(L *golem.Lemmatizer) (TStemTable, error) {
 	D := make(TStemTable, len(T))
-	L, err := golem.New(lang)
-	if err != nil {
-		return nil, err
-	}
 	for _, t := range T {
 		D.Insert(L.Lemma(t), t)
 	}
